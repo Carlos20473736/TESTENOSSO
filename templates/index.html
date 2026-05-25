@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if allowed_domain %}<meta name="allowed-domain" content="{{ allowed_domain }}">{% endif %}
+    <title>SeoFast Multi-Bot</title>
+    <link rel="icon" href="/static/img/logo_chameleon.jpeg" type="image/jpeg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #1a1a1a;
+            --border: #2a2a2a;
+            --green-primary: #00ff41;
+            --green-dark: #00cc33;
+            --green-glow: rgba(0, 255, 65, 0.3);
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --red: #ff4444;
+            --yellow: #ffaa00;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.03) 2px,
+                rgba(0, 255, 65, 0.03) 4px
+            );
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .header img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--green-primary);
+            box-shadow: 0 0 20px var(--green-glow);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--green-primary);
+            text-shadow: 0 0 10px var(--green-glow);
+            letter-spacing: 3px;
+        }
+
+        .header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            color: var(--green-primary);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input, select {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--green-primary);
+            box-shadow: 0 0 5px var(--green-glow);
+        }
+
+        input::placeholder {
+            color: #444;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-start {
+            background: var(--green-primary);
+            color: #000;
+        }
+
+        .btn-start:hover {
+            background: var(--green-dark);
+            box-shadow: 0 0 20px var(--green-glow);
+        }
+
+        .btn-start:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-stop {
+            background: transparent;
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        .btn-stop:hover {
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .btn-stop:disabled {
+            border-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            color: var(--green-primary);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--green-glow);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        .sessions-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .sessions-container::-webkit-scrollbar { width: 6px; }
+        .sessions-container::-webkit-scrollbar-track { background: var(--bg-primary); }
+        .sessions-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            padding: 10px;
+            text-align: left;
+            color: var(--green-primary);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover { background: rgba(0, 255, 65, 0.02); }
+
+        .status-watching { color: var(--yellow); }
+        .status-completed { color: var(--green-primary); }
+        .status-error { color: var(--red); }
+        .status-idle { color: var(--text-secondary); }
+        .status-auth { color: #ff8800; }
+
+        .logs-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .logs-container::-webkit-scrollbar { width: 6px; }
+        .logs-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .log-entry { margin-bottom: 2px; }
+        .log-time { color: #555; }
+        .log-success { color: var(--green-primary); }
+        .log-error { color: var(--red); }
+        .log-warning { color: var(--yellow); }
+        .log-info { color: var(--text-secondary); }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            border: none;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--green-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--green-glow);
+        }
+
+        .slider-value {
+            color: var(--green-primary);
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .running-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--green-primary);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 8px var(--green-glow);
+        }
+
+        .stopped-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--red);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #333;
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+
+        .login-note {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        @media print {
+            body { display: none !important; }
+            html::after {
+                content: 'Impressão não permitida.';
+                display: block;
+                font-size: 24px;
+                padding: 50px;
+                text-align: center;
+            }
+        }
+
+        /* ===== MULTI-ACCOUNT STYLES ===== */
+        .accounts-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .account-item {
+            display: grid;
+            grid-template-columns: 30px 1fr 1fr 80px 40px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .account-item {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            .account-item .acc-num { display: none; }
+        }
+
+        .account-item .acc-num {
+            color: var(--green-primary);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .account-item input {
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+
+        .account-item .acc-sessions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .account-item .acc-sessions input[type="number"] {
+            width: 60px;
+            text-align: center;
+            padding: 8px 5px;
+        }
+
+        .account-item .acc-sessions span {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-remove-acc {
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-remove-acc:hover {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .btn-add-acc {
+            background: transparent;
+            border: 1px dashed var(--green-primary);
+            color: var(--green-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .btn-add-acc:hover {
+            background: rgba(0, 255, 65, 0.05);
+            border-style: solid;
+        }
+
+        .btn-add-acc:disabled {
+            border-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .accounts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .accounts-count {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .accounts-count span {
+            color: var(--green-primary);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <img src="/static/img/logo_anon.png" alt="Logo">
+            <div>
+                <h1>SEOFAST BOT</h1>
+                <div class="subtitle">Multi-Session Automation System v2.0.0</div>
+            </div>
+            <img src="/static/img/logo_chameleon.jpeg" alt="Logo">
+        </div>
+
+        <!-- Multi-Account Card -->
+        <div class="card">
+            <div class="card-title">🔑 CONTAS SEO-FAST.BZ</div>
+            <div class="accounts-header">
+                <p class="login-note">Adicione até 20 contas. Cada conta terá suas próprias sessões independentes. O bot faz login automático e coleta PHPSESSID/hash_ajax.</p>
+                <div class="accounts-count">Contas: <span id="accounts_count">1</span>/20</div>
+            </div>
+            <div class="accounts-list" id="accounts_list">
+                <!-- Accounts will be rendered here by JS -->
+            </div>
+            <button class="btn-add-acc" id="btn_add_account" onclick="addAccount()">+ ADICIONAR CONTA</button>
+
+            <!-- Proxy Config -->
+            <div style="border-top:1px solid #1a1a2e;margin-top:15px;padding-top:15px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;">
+                        <input type="checkbox" id="proxy_enabled" style="width:16px;height:16px;accent-color:var(--green-primary);">
+                        <span style="color:var(--green-primary);font-weight:bold;">🌐 USAR PROXY (DataImpulse)</span>
+                    </label>
+                </div>
+                <div id="proxy_fields" style="display:none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Proxy Login</label>
+                            <input type="text" id="proxy_login" placeholder="Ex: 7f2df2198878db590b29">
+                        </div>
+                        <div class="form-group">
+                            <label>Proxy Senha</label>
+                            <input type="password" id="proxy_password" placeholder="Ex: 0c60b5e747a52032">
+                        </div>
+                        <div class="form-group">
+                            <label>Proxy Host</label>
+                            <input type="text" id="proxy_host" value="gw.dataimpulse.com" placeholder="gw.dataimpulse.com">
+                        </div>
+                        <div class="form-group">
+                            <label>País (código)</label>
+                            <input type="text" id="proxy_country" value="br" placeholder="br, ru, us, de..." style="text-transform:lowercase;">
+                        </div>
+                    </div>
+                    <p style="font-size:0.7rem;color:#555;margin-top:5px;">Cada sessão usará um IP residencial diferente (porta sticky). User-Agent e Device ID únicos por sessão.</p>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-start" id="btn_start" onclick="startBot()">▶ INICIAR TODAS</button>
+                <button class="btn btn-stop" id="btn_stop" onclick="stopBot()" disabled>■ PARAR TODAS</button>
+            </div>
+        </div>
+
+        <!-- IP do Visitante -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title">🌐 SEU IP (NAVEGADOR)</div>
+            <div style="display:flex;align-items:center;gap:15px;">
+                <div id="visitor_ip_display" style="font-size:1.5rem;color:var(--green-primary);font-weight:bold;text-shadow:0 0 5px var(--green-glow);">Detectando...</div>
+                <button onclick="detectVisitorIP()" style="background:transparent;border:1px solid var(--green-primary);color:var(--green-primary);padding:6px 12px;border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;font-size:0.75rem;">↻ ATUALIZAR</button>
+            </div>
+            <p style="font-size:0.7rem;color:var(--text-secondary);margin-top:8px;">Este é o IP público do seu navegador detectado pelo servidor.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="stat_status">
+                    <span class="stopped-indicator"></span>OFFLINE
+                </div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat_earned">0.000 ₽</div>
+                <div class="stat-label">Ganho Total</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat_views">0</div>
+                <div class="stat-label">Views</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat_sessions">0</div>
+                <div class="stat-label">Sessões Ativas</div>
+            </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <div class="card">
+            <div class="card-title">📡 SESSÕES ATIVAS</div>
+            <div class="sessions-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Conta</th>
+                            <th>#</th>
+                            <th>Dispositivo</th>
+                            <th>IP</th>
+                            <th>Status</th>
+                            <th>Views</th>
+                            <th>Ganho</th>
+                            <th>Vídeo Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions_table">
+                        <tr><td colspan="8" style="text-align:center;color:#444;">Nenhuma sessão ativa</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="card">
+            <div class="card-title">📋 LOGS</div>
+            <div class="logs-container" id="logs_container">
+                <div class="log-entry log-info">Sistema pronto. Adicione suas contas e clique INICIAR TODAS.</div>
+            </div>
+        </div>
+
+        <!-- Usuarios Online -->
+        <div class="card">
+            <div class="card-title">👥 USUÁRIOS ONLINE <span id="online_count_badge" style="background:var(--green-primary);color:#000;padding:2px 8px;border-radius:10px;font-size:0.75rem;margin-left:10px;">0</span></div>
+            <div class="sessions-container" style="max-height:200px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Email</th>
+                            <th>Sessões</th>
+                            <th>Views</th>
+                            <th>Ganho</th>
+                            <th>Desde</th>
+                        </tr>
+                    </thead>
+                    <tbody id="online_users_table">
+                        <tr><td colspan="6" style="text-align:center;color:#444;">Nenhum usuário online</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            SeoFast Multi-Bot &copy; 2026 | Use por sua conta e risco
+        </div>
+    </div>
+
+    <script>
+        // Anti-scraping protections
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') { e.preventDefault(); return false; }
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'a') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'p') { e.preventDefault(); return false; }
+        });
+        document.addEventListener('selectstart', function(e) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault(); return false;
+            }
+        });
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); return false; });
+        if (window.top !== window.self) {
+            document.body.innerHTML = '<h1 style="color:red;text-align:center;padding:50px;">ACESSO BLOQUEADO</h1>';
+        }
+        // Domain protection - allows Railway, Render, localhost, and custom domains
+        (function() {
+            const allowedDomains = ['seofast-bot.onrender.com', 'localhost', '127.0.0.1', '0.0.0.0'];
+            const allowedSuffixes = ['.railway.app', '.onrender.com', '.up.railway.app', '.manus.app', '.manus.space'];
+            const currentHost = window.location.hostname;
+            // Check exact match
+            let isAllowed = allowedDomains.some(d => currentHost === d || currentHost.includes(d));
+            // Check suffix match (Railway, Render, etc)
+            if (!isAllowed) {
+                isAllowed = allowedSuffixes.some(s => currentHost.endsWith(s));
+            }
+            // Allow local/private IPs
+            if (!isAllowed) {
+                isAllowed = currentHost === '' || currentHost.startsWith('192.168') || currentHost.startsWith('10.') || currentHost.startsWith('172.');
+            }
+            // Allow if served from RAILWAY_PUBLIC_DOMAIN env (injected by backend)
+            const metaDomain = document.querySelector('meta[name="allowed-domain"]');
+            if (!isAllowed && metaDomain) {
+                const extraDomain = metaDomain.getAttribute('content');
+                if (extraDomain && currentHost === extraDomain) {
+                    isAllowed = true;
+                }
+            }
+            // Proteção desabilitada - domínio Manus permitido
+            // if (!isAllowed) { ... }
+        })();
+        (function() {
+            document.querySelectorAll('.card, .stat-box, .btn').forEach(function(el) {
+                el.setAttribute('data-v', Math.random().toString(36).substr(2, 8));
+            });
+        })();
+        (function() {
+            var honeypot = document.createElement('a');
+            honeypot.href = '/trap';
+            honeypot.style.cssText = 'position:absolute;left:-9999px;opacity:0;height:1px;width:1px;overflow:hidden;';
+            honeypot.textContent = 'admin panel';
+            document.body.appendChild(honeypot);
+        })();
+
+        // ═══════════════════════════════════════════════════════════════
+        // DETECÇÃO DE IP DO VISITANTE
+        // ═══════════════════════════════════════════════════════════════
+        function detectVisitorIP() {
+            const el = document.getElementById('visitor_ip_display');
+            el.textContent = 'Detectando...';
+            fetch('/api/myip', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                el.textContent = data.ip || 'Desconhecido';
+            })
+            .catch(() => {
+                el.textContent = 'Erro ao detectar';
+            });
+        }
+        // Detectar IP ao carregar a página
+        detectVisitorIP();
+
+        // ═══════════════════════════════════════════════════════════════
+        // MULTI-ACCOUNT MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════
+
+        const MAX_ACCOUNTS = 20;
+        let accounts = []; // Array of {email, password, sessions}
+
+        function loadAccounts() {
+            const saved = localStorage.getItem('sf_accounts');
+            if (saved) {
+                try {
+                    accounts = JSON.parse(saved);
+                } catch(e) {
+                    accounts = [];
+                }
+            }
+            // Migration: if old single-account data exists, import it
+            if (accounts.length === 0) {
+                const oldEmail = localStorage.getItem('sf_email');
+                const oldPass = localStorage.getItem('sf_password');
+                const oldSessions = localStorage.getItem('sf_sessions');
+                if (oldEmail && oldPass) {
+                    accounts.push({
+                        email: oldEmail,
+                        password: oldPass,
+                        sessions: parseInt(oldSessions) || 15
+                    });
+                }
+            }
+            if (accounts.length === 0) {
+                accounts.push({ email: '', password: '', sessions: 15 });
+            }
+            renderAccounts();
+        }
+
+        function saveAccounts() {
+            // Read current values from DOM
+            const items = document.querySelectorAll('.account-item');
+            accounts = [];
+            items.forEach((item, idx) => {
+                const email = item.querySelector('.acc-email').value.trim();
+                const password = item.querySelector('.acc-password').value.trim();
+                const sessions = parseInt(item.querySelector('.acc-sessions-input').value) || 15;
+                accounts.push({ email, password, sessions });
+            });
+            localStorage.setItem('sf_accounts', JSON.stringify(accounts));
+            // Also save proxy
+            localStorage.setItem('sf_proxy_enabled', document.getElementById('proxy_enabled').checked ? '1' : '0');
+            localStorage.setItem('sf_proxy_login', document.getElementById('proxy_login').value);
+            localStorage.setItem('sf_proxy_password', document.getElementById('proxy_password').value);
+            localStorage.setItem('sf_proxy_host', document.getElementById('proxy_host').value);
+            localStorage.setItem('sf_proxy_country', document.getElementById('proxy_country').value);
+            updateAccountsCount();
+        }
+
+        function renderAccounts() {
+            const container = document.getElementById('accounts_list');
+            container.innerHTML = '';
+            accounts.forEach((acc, idx) => {
+                const div = document.createElement('div');
+                div.className = 'account-item';
+                div.innerHTML = `
+                    <div class="acc-num">${idx + 1}</div>
+                    <input type="text" class="acc-email" value="${escapeHtml(acc.email)}" placeholder="Email / Login" oninput="saveAccounts()">
+                    <input type="password" class="acc-password" value="${escapeHtml(acc.password)}" placeholder="Senha" oninput="saveAccounts()">
+                    <div class="acc-sessions">
+                        <input type="number" class="acc-sessions-input" min="1" max="100" value="${acc.sessions}" oninput="saveAccounts()">
+                        <span>sess.</span>
+                    </div>
+                    <button class="btn-remove-acc" onclick="removeAccount(${idx})" title="Remover conta">✕</button>
+                `;
+                container.appendChild(div);
+            });
+            updateAccountsCount();
+            updateAddButton();
+        }
+
+        function addAccount() {
+            if (accounts.length >= MAX_ACCOUNTS) return;
+            accounts.push({ email: '', password: '', sessions: 15 });
+            renderAccounts();
+            saveAccounts();
+        }
+
+        function removeAccount(idx) {
+            if (accounts.length <= 1) {
+                alert('Você precisa ter pelo menos 1 conta!');
+                return;
+            }
+            accounts.splice(idx, 1);
+            renderAccounts();
+            saveAccounts();
+        }
+
+        function updateAccountsCount() {
+            document.getElementById('accounts_count').textContent = accounts.length;
+        }
+
+        function updateAddButton() {
+            const btn = document.getElementById('btn_add_account');
+            if (accounts.length >= MAX_ACCOUNTS) {
+                btn.disabled = true;
+                btn.textContent = 'LIMITE DE 20 CONTAS ATINGIDO';
+            } else {
+                btn.disabled = false;
+                btn.textContent = '+ ADICIONAR CONTA (' + accounts.length + '/' + MAX_ACCOUNTS + ')';
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // BOT LOGIC
+        // ═══════════════════════════════════════════════════════════════
+
+        let pollInterval = null;
+        let onlineInterval = null;
+        let heartbeatInterval = null;
+        let activeEmails = []; // emails currently running
+
+        // ═══ PROXY TOGGLE ═══
+        const proxyCheckbox = document.getElementById('proxy_enabled');
+        const proxyFields = document.getElementById('proxy_fields');
+        proxyCheckbox.addEventListener('change', () => {
+            proxyFields.style.display = proxyCheckbox.checked ? 'block' : 'none';
+            saveAccounts();
+        });
+
+        // ═══ LOAD SAVED PROXY ═══
+        (function loadProxy() {
+            const savedProxyEnabled = localStorage.getItem('sf_proxy_enabled');
+            const savedProxyLogin = localStorage.getItem('sf_proxy_login');
+            const savedProxyPass = localStorage.getItem('sf_proxy_password');
+            const savedProxyHost = localStorage.getItem('sf_proxy_host');
+            const savedProxyCountry = localStorage.getItem('sf_proxy_country');
+            if (savedProxyEnabled === '1') {
+                proxyCheckbox.checked = true;
+                proxyFields.style.display = 'block';
+            }
+            if (savedProxyLogin) document.getElementById('proxy_login').value = savedProxyLogin;
+            if (savedProxyPass) document.getElementById('proxy_password').value = savedProxyPass;
+            if (savedProxyHost) document.getElementById('proxy_host').value = savedProxyHost;
+            if (savedProxyCountry) document.getElementById('proxy_country').value = savedProxyCountry;
+        })();
+
+        // ═══ POLLING DE USUARIOS ONLINE ═══
+        function pollOnlineUsers() {
+            fetch('/api/online', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('online_count_badge').textContent = data.online_count;
+                const tbody = document.getElementById('online_users_table');
+                if (data.users.length > 0) {
+                    tbody.innerHTML = data.users.map((u, i) => {
+                        return '<tr>' +
+                            '<td>' + (i + 1) + '</td>' +
+                            '<td style="color:var(--green-primary);">' + u.email + '</td>' +
+                            '<td>' + u.sessions + '</td>' +
+                            '<td>' + (u.views || 0) + '</td>' +
+                            '<td style="color:var(--green-primary);">' + (u.earned || 0).toFixed(3) + ' \u20bd</td>' +
+                            '<td>' + u.started_at + '</td>' +
+                        '</tr>';
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#444;">Nenhum usu\u00e1rio online</td></tr>';
+                }
+            })
+            .catch(() => {});
+        }
+
+        pollOnlineUsers();
+        onlineInterval = setInterval(pollOnlineUsers, 5000);
+
+        // ═══ HEARTBEAT ═══
+        function sendHeartbeat() {
+            activeEmails.forEach(email => {
+                if (email) {
+                    fetch('/api/heartbeat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ email: email })
+                    }).catch(() => {});
+                }
+            });
+        }
+        heartbeatInterval = setInterval(sendHeartbeat, 60000);
+
+        // ═══ START BOT (ALL ACCOUNTS) ═══
+        function startBot() {
+            // Read current accounts from DOM
+            saveAccounts();
+
+            // Filter valid accounts
+            const validAccounts = accounts.filter(a => a.email && a.password);
+            if (validAccounts.length === 0) {
+                alert('Adicione pelo menos uma conta com email e senha!');
+                return;
+            }
+
+            document.getElementById('btn_start').disabled = true;
+            document.getElementById('btn_stop').disabled = false;
+            document.getElementById('logs_container').innerHTML = '<div class="log-entry log-info">[' + new Date().toLocaleTimeString() + '] Iniciando ' + validAccounts.length + ' conta(s)...</div>';
+
+            activeEmails = validAccounts.map(a => a.email);
+
+            const proxyConfig = {
+                proxy_enabled: proxyCheckbox.checked,
+                proxy_login: document.getElementById('proxy_login').value.trim(),
+                proxy_password: document.getElementById('proxy_password').value.trim(),
+                proxy_host: document.getElementById('proxy_host').value.trim(),
+                proxy_country: document.getElementById('proxy_country').value.trim(),
+            };
+
+            // Start all accounts
+            const startPromises = validAccounts.map(acc => {
+                return fetch('/api/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        email: acc.email,
+                        password: acc.password,
+                        num_sessions: acc.sessions,
+                        ...proxyConfig
+                    })
+                }).then(r => {
+                    if (!r.ok) {
+                        return r.json().then(j => ({ error: j.error || 'Erro HTTP ' + r.status, email: acc.email }));
+                    }
+                    return r.json().then(j => ({ ...j, email: acc.email }));
+                }).catch(err => ({ error: err.message, email: acc.email }));
+            });
+
+            Promise.all(startPromises).then(results => {
+                let hasError = false;
+                results.forEach(r => {
+                    if (r.error) {
+                        hasError = true;
+                        const logsEl = document.getElementById('logs_container');
+                        logsEl.innerHTML += '<div class="log-entry log-error">[' + new Date().toLocaleTimeString() + '] Erro (' + r.email + '): ' + r.error + '</div>';
+                    }
+                });
+
+                const successCount = results.filter(r => !r.error).length;
+                if (successCount > 0) {
+                    if (!pollInterval) {
+                        pollInterval = setInterval(pollStatus, 2000);
+                    }
+                    pollStatus();
+                }
+
+                if (successCount === 0) {
+                    document.getElementById('btn_start').disabled = false;
+                    document.getElementById('btn_stop').disabled = true;
+                }
+            });
+        }
+
+        // ═══ STOP BOT (ALL ACCOUNTS) ═══
+        function stopBot() {
+            document.getElementById('btn_stop').disabled = true;
+
+            // Read current emails from accounts
+            saveAccounts();
+            const emails = activeEmails.length > 0 ? activeEmails : accounts.filter(a => a.email).map(a => a.email);
+
+            const stopPromises = emails.map(email => {
+                return fetch('/api/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ email: email })
+                }).then(r => r.json()).catch(() => ({}));
+            });
+
+            Promise.all(stopPromises).then(() => {
+                document.getElementById('btn_start').disabled = false;
+                document.getElementById('btn_stop').disabled = true;
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+                document.getElementById('stat_status').innerHTML = '<span class="stopped-indicator"></span>OFFLINE';
+                activeEmails = [];
+            });
+        }
+
+        // ═══ POLL STATUS (ALL ACCOUNTS) ═══
+        function pollStatus() {
+            const emails = activeEmails.length > 0 ? activeEmails : accounts.filter(a => a.email).map(a => a.email);
+            if (emails.length === 0) return;
+
+            const statusPromises = emails.map(email => {
+                return fetch('/api/status?email=' + encodeURIComponent(email), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(data => ({ ...data, email }))
+                .catch(() => ({ running: false, total_earned: 0, total_views: 0, sessions: [], logs: [], email }));
+            });
+
+            Promise.all(statusPromises).then(allData => {
+                let totalEarned = 0;
+                let totalViews = 0;
+                let allSessions = [];
+                let allLogs = [];
+                let anyRunning = false;
+
+                allData.forEach(data => {
+                    totalEarned += data.total_earned || 0;
+                    totalViews += data.total_views || 0;
+                    if (data.running || (data.active_threads && data.active_threads > 0)) anyRunning = true;
+
+                    (data.sessions || []).forEach(s => {
+                        allSessions.push({ ...s, account_email: data.email });
+                    });
+
+                    (data.logs || []).forEach(log => {
+                        allLogs.push({ ...log, email: data.email });
+                    });
+                });
+
+                const statusEl = document.getElementById('stat_status');
+                const activeSessions = allSessions.filter(s =>
+                    s.status !== 'stopped' && s.status !== 'idle'
+                ).length;
+                const hasActivity = anyRunning || activeSessions > 0;
+
+                if (hasActivity) {
+                    statusEl.innerHTML = '<span class="running-indicator"></span>ONLINE';
+                    document.getElementById('btn_start').disabled = true;
+                    document.getElementById('btn_stop').disabled = false;
+                } else {
+                    statusEl.innerHTML = '<span class="stopped-indicator"></span>OFFLINE';
+                    document.getElementById('btn_start').disabled = false;
+                    document.getElementById('btn_stop').disabled = true;
+                    if (pollInterval) {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+                    }
+                    activeEmails = [];
+                }
+
+                document.getElementById('stat_earned').textContent = totalEarned.toFixed(3) + ' \u20bd';
+                document.getElementById('stat_views').textContent = totalViews;
+                document.getElementById('stat_sessions').textContent = activeSessions + '/' + allSessions.length;
+
+                // Sessions table
+                const tbody = document.getElementById('sessions_table');
+                if (allSessions.length > 0) {
+                    tbody.innerHTML = allSessions.map(s => {
+                        let statusClass = 'status-idle';
+                        let statusText = s.status;
+                        if (s.status.startsWith('watching')) {
+                            statusClass = 'status-watching';
+                            statusText = '\u25b6 Assistindo';
+                        } else if (s.status === 'completed') {
+                            statusClass = 'status-completed';
+                            statusText = '\u2713 Completo';
+                        } else if (s.status.includes('error') || s.status.includes('failed')) {
+                            statusClass = 'status-error';
+                            statusText = '\u2717 Erro';
+                        } else if (s.status === 'getting_task' || s.status === 'starting') {
+                            statusText = '\u27f3 Buscando...';
+                        } else if (s.status === 'completing') {
+                            statusText = '\u27f3 Confirmando...';
+                        } else if (s.status === 'waiting' || s.status === 'no_task') {
+                            statusText = '\u23f3 Aguardando';
+                        } else if (s.status === 'auth_needed' || s.status === 'session_expired') {
+                            statusClass = 'status-auth';
+                            statusText = '\ud83d\udd11 Re-auth...';
+                        }
+
+                        const shortEmail = s.account_email ? s.account_email.split('@')[0] : '-';
+
+                        return '<tr>' +
+                            '<td style="font-size:0.65rem;color:var(--yellow);">' + shortEmail + '</td>' +
+                            '<td>' + s.id + '</td>' +
+                            '<td style="font-size:0.65rem">' + (s.device_name || s.device_id.substring(0, 20)) + '</td>' +
+                            '<td style="font-size:0.7rem;color:var(--green-primary);">' + (s.ip || '-') + '</td>' +
+                            '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+                            '<td>' + s.views + '</td>' +
+                            '<td>' + s.earned.toFixed(3) + ' \u20bd</td>' +
+                            '<td style="font-size:0.65rem">' + (s.current_video || '-') + '</td>' +
+                        '</tr>';
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#444;">Nenhuma sess\u00e3o ativa</td></tr>';
+                }
+
+                // Logs (merged, sorted by time)
+                const logsEl = document.getElementById('logs_container');
+                if (allLogs.length > 0) {
+                    // Show last 150 logs
+                    const recentLogs = allLogs.slice(-150);
+                    logsEl.innerHTML = recentLogs.map(log => {
+                        const emailTag = log.email ? '<span style="color:var(--yellow);">[' + log.email.split('@')[0] + ']</span> ' : '';
+                        return '<div class="log-entry log-' + log.level + '"><span class="log-time">[' + log.time + ']</span> ' + emailTag + log.message + '</div>';
+                    }).join('');
+                    logsEl.scrollTop = logsEl.scrollHeight;
+                }
+            });
+        }
+
+        // ═══ INITIAL STATE CHECK ═══
+        (function checkInitialState() {
+            loadAccounts();
+            const emails = accounts.filter(a => a.email).map(a => a.email);
+            if (emails.length === 0) return;
+
+            // Check if any account is already running
+            const checks = emails.map(email => {
+                return fetch('/api/status?email=' + encodeURIComponent(email), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(data => ({ ...data, email }))
+                .catch(() => ({ running: false, sessions: [], email }));
+            });
+
+            Promise.all(checks).then(allData => {
+                let anyRunning = false;
+                allData.forEach(data => {
+                    const activeSessions = (data.sessions || []).filter(s =>
+                        s.status !== 'stopped' && s.status !== 'idle'
+                    ).length;
+                    if (data.running || activeSessions > 0 || (data.active_threads && data.active_threads > 0)) {
+                        anyRunning = true;
+                        if (!activeEmails.includes(data.email)) {
+                            activeEmails.push(data.email);
+                        }
+                    }
+                });
+
+                if (anyRunning) {
+                    document.getElementById('btn_start').disabled = true;
+                    document.getElementById('btn_stop').disabled = false;
+                    document.getElementById('stat_status').innerHTML = '<span class="running-indicator"></span>ONLINE';
+                    if (!pollInterval) {
+                        pollInterval = setInterval(pollStatus, 2000);
+                    }
+                    pollStatus();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

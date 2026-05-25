@@ -1,0 +1,15 @@
+{
+  "muriel55herrera@gmail.com": {
+    "email": "muriel55herrera@gmail.com",
+    "password": "7380ad8a67",
+    "num_sessions": 15,
+    "proxy_config": {
+      "enabled": false,
+      "login": "",
+      "password": "",
+      "host": "gw.dataimpulse.com",
+      "country": "br"
+    },
+    "started_at": "2026-05-25T15:36:56.196691"
+  }
+}
